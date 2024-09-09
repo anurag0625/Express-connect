@@ -6,14 +6,14 @@ const postModel = require('./models/post');
 const cookieParser = require('cookie-parser');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
-
+const multer = require('multer');
+const upload = require('./config/multerconfig');
 
 // Middleware to parse JSON request bodies
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 app.use(express.urlencoded({extended: true}));
 app.use(cookieParser());
-
 
 //SET view engine for render files
 app.set("view engine", "ejs");
@@ -82,7 +82,7 @@ app.post('/login', async (req, res) => {
 });
 
 
-// -- PROILE
+// -- PROFILE
 app.get('/profile',isLoggedIn, async (req, res) => { 
     let user = await userModel.findOne({email: req.user.email}).populate("posts");
     // console.log(user);
@@ -107,6 +107,20 @@ app.post('/post', isLoggedIn, async (req, res) => {
 
     res.redirect('/profile');
 });
+
+
+app.get('/profile/upload', async (req, res) => {
+    res.render('profileUpload');
+});
+
+app.post('/upload', isLoggedIn,  upload.single("image"),  async (req, res) => {
+   let user = await userModel.findOne({email : req.user.email});
+   user.profilepic = req.file.filename;
+   await user.save();
+   res.redirect('/profile');
+    console.log(req.file);
+});
+
 
 
 // DELETE post
@@ -156,12 +170,14 @@ app.post('/edit/:id', async (req, res) => {
 
 
 // -- LOGOUT
-
 app.get('/logout', (req, res) => {
     res.cookie("token", "");
     res.redirect('/login');
 });
 
+
+
+// AUTHENTICATIO Middleware 
 
 function isLoggedIn(req, res, next) {
     const token = req.cookies.token;
