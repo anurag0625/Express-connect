@@ -15,3 +15,4 @@ A simple social media application built with Node.js, Express.js, MongoDB, and M
 
 NOTE: Added console.log() statements at various points in the app.js file for debugging purposes. These logs are intended to help you verify that the application is functioning as expected. You can remove or adjust them as needed once you confirm that the code is working correctly.
 
+
