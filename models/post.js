@@ -15,10 +15,21 @@ const postSchema = mongoose.Schema({
         ref: 'user'
         }
     ],
+    comments: [{
+        user: { 
+            type: mongoose.Schema.Types.ObjectId, 
+            ref: 'User' 
+        },
+        content: String,
+        date: { 
+            type: String,  
+            default: () => new Date().toString()  
+        }
+    }],
     date: { 
-        type: Date, 
-        default: Date.now 
+        type: String,  
+        default: () => new Date().toString()  
     }
 });
 
-module.exports = mongoose.model('post' , postSchema);
+module.exports = mongoose.model('Post' , postSchema);

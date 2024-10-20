@@ -1,39 +1,47 @@
+//   ------------   BACKEND SOCIAL ----------------- // 
+//   ------------   BACKEND SOCIAL ----------------- // 
+
+
+
 const express = require('express');
-const app = express();
 const path = require('path');
+const jwt = require('jsonwebtoken');
+const bcrypt = require('bcryptjs');
 const userModel = require('./models/user');
 const postModel = require('./models/post');
-const cookieParser = require('cookie-parser');
-const bcrypt = require('bcryptjs');
-const jwt = require('jsonwebtoken');
 const multer = require('multer');
-const upload = require('./config/multerconfig');
+const cookieParser = require('cookie-parser');
+const upload = require('./config/multer-config');
 
-// Middleware to parse JSON request bodies
+const app = express();
+
+
+// Middleware
 app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, 'public')));
-app.use(express.urlencoded({extended: true}));
 app.use(cookieParser());
 
-//SET view engine for render files
-app.set("view engine", "ejs");
+// view engine configuration
+app.set('view engine', 'ejs');
 
-
-
-// ROUTES 
 app.get('/', (req, res) => {
     res.render('index');
 });
 
 
-// To CREATE account --  index.ejs
+app.get('/login', (req, res) => {
+    res.render('login');
+});
+
+
 app.post('/register', async (req, res) => {
-    let {name, username, email, age, password} = req.body;
-   let user = await userModel.findOne({email});
-    if(user){
+    let { name, username, email, age, password } = req.body;
+    let user = await userModel.findOne({ email });
+    if (user) {
         return res.send('Email already exists');
     }
-    
+
     bcrypt.genSalt(10, async (err, salt) => {
         bcrypt.hash(password, salt, async (err, hash) => {
             // crtdUser.password = hash;
@@ -42,158 +50,177 @@ app.post('/register', async (req, res) => {
                 username,
                 email,
                 age,
-                password : hash
+                password: hash
             });
             // res.send('Registration successful');
-            let token = jwt.sign({email: email, userid: user._id}, 'secretkey');
-            res.cookie("token" , token);
+            let token = jwt.sign({ email: email, userid: user._id }, 'secretkey');
+            res.cookie("token", token);
             // console.log(token);
             res.send('Registration successful');
         });
     });
+    res.redirect('/login');
 
 });
 
-// --- LOGIN 
 
-app.get('/login', (req, res) => {
-    res.render('login');
-})
 
 app.post('/login', async (req, res) => {
-    let {email, password} = req.body;
-    let user = await userModel.findOne({email});
+    let { email, password } = req.body;
+    let user = await userModel.findOne({ email });
     // console.log(user);
-    if(!user){
+    if (!user) {
         return res.send('User not found');
     }
     await bcrypt.compare(password, user.password, (err, result) => {
-        if(result) {
-            let token = jwt.sign({email: email, userid: user._id}, 'secretkey');
-            res.cookie("token" , token);
+        if (result) {
+            let token = jwt.sign({ email: email, userid: user._id }, 'secretkey');
+            res.cookie("token", token);
             // console.log(token);
             res.redirect('/profile');
         }
         // else res.redirect('/login');
         // console.log("done");
-        else res.redirect('/profile');
+        else res.redirect('/login');
     });
 
 });
 
+app.get('/profile', isLoggedIn, async (req, res) => {
+    let user = await userModel.findOne({ email: req.user.email }).populate("posts");
+    console.log(user);
+    res.render('profile', { user });
+});
 
-// -- PROFILE
-app.get('/profile',isLoggedIn, async (req, res) => { 
-    let user = await userModel.findOne({email: req.user.email}).populate("posts");
-    // console.log(user);
-    res.render('profile', {user});
-})
+// profile pic
+app.get('/profile/upload', (req, res) => {
+    res.render('profileUpload');
+});
 
-
-app.post('/post', isLoggedIn, async (req, res) => {
-    const { content } = req.body;
-    const user = await userModel.findOne({email: req.user.email});
-
-    if(!user) { return res.redirect('/login'); }
-
-    const newPost = await postModel.create({
-        content,
-        author: user.username,
-        user: user._id
-    });
-
-    user.posts.push(newPost._id);
+app.post('/upload', isLoggedIn,  upload.single('image'), async (req, res) => {
+    let user = await userModel.findOne({email: req.user.email});
+    user.profilepic = req.file.filename;
     await user.save();
 
     res.redirect('/profile');
 });
 
+// create post
+app.post('/post', isLoggedIn, async (req, res) => {
 
-app.get('/profile/upload', async (req, res) => {
-    res.render('profileUpload');
-});
+    let user = await userModel.findOne({ email: req.user.email });
+    let { title, content } = req.body;
 
-app.post('/upload', isLoggedIn,  upload.single("image"),  async (req, res) => {
-   let user = await userModel.findOne({email : req.user.email});
-   user.profilepic = req.file.filename;
-   await user.save();
-   res.redirect('/profile');
-    console.log(req.file);
-});
+    let now = new Date();
+    let months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+    let formattedDate = `${months[now.getMonth()]} ${now.getDate()} ${now.getFullYear()} ${now.getHours()}:${now.getMinutes().toString().padStart(2, '0')}`;
 
+    let post = await postModel.create({
+        title,
+        content,
+        author: user.username,
+        user: user._id,
+        likes: [],
+        date: formattedDate
+    });
 
+    user.posts.push(post._id);
+    await user.save();
 
-// DELETE post
-app.get('/delete/:id', isLoggedIn, async (req, res) => {
-    const post = await postModel.findOneAndDelete({_id: req.params.id});
-    if (post) {
-        //user associated with the post
-        const user = await userModel.findOne({_id: req.user.userid});
+    // console.log("Created Post:", post); 
 
-        // Remove the post ID from the user's posts array
-        if (user) {
-            user.posts = user.posts.filter(postId => postId.toString() !== req.params.id);
-            await user.save();
-        }
-    }
     res.redirect('/profile');
 });
 
 
-// LIKE post
+app.get('/delete/:id', isLoggedIn, async (req, res) => {
+    let user = await userModel.findOne({ email: req.user.email });
+
+    let post = await postModel.findByIdAndDelete(req.params.id);
+    user.posts.pull(post._id);
+    await user.save();
+    res.redirect('/profile');
+});
+
+
+// LIKE POST 
 app.get('/like/:id', isLoggedIn, async (req, res) => {
-    let post = await postModel.findOne({_id: req.params.id}).populate("user");
-    if(post.likes.indexOf(req.user.userid) === -1){
+    let post = await postModel.findOne({ _id: req.params.id }).populate("user");
+    if (post.likes.indexOf(req.user.userid) === -1) {
         post.likes.push(req.user.userid);
-    } else{
+    } else {
         post.likes.splice(post.likes.indexOf(req.user.userid), 1);
     }
-    
+
     await post.save();
-    // console.log(post.likes.length);
     res.redirect('/profile');
 });
 
 
-// -- EDIT Post
+
+// EDIT POST
 app.get('/edit/:id', isLoggedIn, async (req, res) => {
-    const post = await postModel.findOne({_id: req.params.id});
-    const user = await userModel.findOne({_id: req.user.userid});
-    res.render('edit', {post, user});
+    let post = await postModel.findOne({ _id: req.params.id }).populate("user");
+
+    res.render('edit', { post });
 });
 
 
-app.post('/edit/:id', async (req, res) => {
-    let post = await postModel.findOneAndUpdate({_id: req.params.id}, {content: req.body.content});
+app.post('/update/:id', isLoggedIn, async (req, res) => {
+    let post = await postModel.findByIdAndUpdate(req.params.id, { content: req.body.content });
     res.redirect('/profile');
 });
 
 
-// -- LOGOUT
+
+// COMMENTS :
+app.get('/comment/:id', isLoggedIn, async (req, res) => {
+    let post = await postModel.findById(req.params.id).populate('comments.user');
+    res.render('comment', { post });
+});
+
+
+app.post('/comment/:id', isLoggedIn, async (req, res) => {
+    let post = await postModel.findById(req.params.id);
+
+    let now = new Date()
+    let months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+    let formattedDate = `${months[now.getMonth()]} ${now.getDate()} ${now.getFullYear()} ${now.getHours()}:${now.getMinutes().toString().padStart(2, '0')}`;
+
+    post.comments.push({
+        content: req.body.comment,
+        user: req.user._id,
+        date: formattedDate,
+    });
+    await post.save();
+    res.redirect(`/comment/${req.params.id}`);
+});
+
+
+
+
 app.get('/logout', (req, res) => {
-    res.cookie("token", "");
+    res.clearCookie('token');
     res.redirect('/login');
 });
 
 
-
-// AUTHENTICATIO Middleware 
-
 function isLoggedIn(req, res, next) {
-    const token = req.cookies.token;
-
-    if (!token) {
-        return res.redirect('/login'); 
+    if (!req.cookies.token) {
+        return res.redirect('/login');
+    }
+    if (req.cookies.token === "") {
+        res.redirect('/login');
+    }
+    else {
+        let data = jwt.verify(req.cookies.token, 'secretkey');
+        req.user = data;
+        next();
     }
 
-   
-    const data = jwt.verify(token, 'secretkey');
-    req.user = data;    
-    next(); 
 }
 
 
-//Start
-app.listen(3000, () => {
-  console.log('Ha bhai server on 3000');
+app.listen(8000, () => {
+    console.log("Hello bhai... server running on 8000");
 });

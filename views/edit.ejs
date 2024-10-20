@@ -3,30 +3,21 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>EJS</title>
+    <title>Profile</title>
     <link rel="stylesheet" href="/stylesheets/style.css">
     <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="/public/stylesheets/style.css">
 </head>
 <body>
-    <div class=" class1 min-h-screen w-full bg-zinc-900 p-6 ">
-
-        <h1 class="text-white text-3xl mx-auto text-center mb-10">Profile page!!</h1>
-        <div class="flex justify-between items-center">
-            <h3 class="text-white text-3xl mb-5">Hello, <%= user.name %> 👋🙌</h3>
-            <a class="text-white bg-red-500 rounded-md px-3 py-2 leading-none" href="/logout">Logout</a>
-        </div>      
-
-        <h5 class="text-pink-300 text-xl mb-5">Create a new post !</h5>
-        <form action="/edit/<%= post._id%>" method="POST" class="flex flex-col ">
-            <textarea class=" text-white bg-zinc-800 rounded-md w-1/3 p-3 resize-none" name="content" placeholder="what's in your mind ?" > <%= post.content%></textarea>
-            <input class=" w-32 bg-yellow-500 text-black rounded-md mt-5 p-3 hover:bg-yellow-600" type="submit" value="Update Post">
+    <div class="min-h-screen w-full bg-zinc-900 p-10">
+        <h1 class="text-white text-2xl "> Edit your Post !!</h1>
+        
+        
+        <form action="/update/<%= post._id%>" method="post" class="block mt-10 flex flex-col">
+            <input type="text" name="title" class="w-1/3 text-white bg-transparent mt-3 border-2 border-zinc-800 rounded-md p-3 outline-none" placeholder="Title (Optional)" value="<%= post.title%>">
+            <textarea name="content" class="w-1/3 text-white resize-none bg-transparent mt-3 border-2 border-zinc-800 rounded-md p-3 outline-none" placeholder="Heyy!! What's in your mind ?"> <%= post.content%></textarea>
+            <input type="submit" class="px-3 py-2 bg-yellow-500 rounded-md w-1/6 block text-black hover:bg-orange-500 mt-5" value="Post">
         </form>
         
     </div>
 </body>
 </html>
-
-
-
-

@@ -3,67 +3,70 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>EJS</title>
+    <title>Profile</title>
     <link rel="stylesheet" href="/stylesheets/style.css">
     <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="/public/stylesheets/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css" />
 </head>
 <body>
-    <div class=" class1 min-h-screen w-full bg-zinc-900 p-6 ">
-
-        <h1 class="text-white text-3xl mx-auto text-center mb-10">Profile page!!</h1>
-
-        <div class="flex justify-between items-center">
-            <div class="flex items start gap-3">
-                <div class="h-16 w-16 rounded-md bg-white place-items-center">
-                    <img class="object-cover object-center w-full h-full rounded-md" src="/images/uploads/<%= user.profilepic%> " alt="">
+    <div class="min-h-screen w-full bg-zinc-900 p-10">
+        <h1 class="text-purple-300 text-2xl "> <%= user.name%></h1>
+        <div class="header flex justify-between  items-center">
+            <div class="headLeft flex">
+                <div class="image  m-3 "> 
+                    <img src="/images/uploads/<%= user.profilepic%>" alt="" class=" h-[100px] w-[100px] rounded-full"> 
                 </div>
-                <div class="flex flex-col ">
-                    <h3 class="text-white text-3xl mb-5">Hello, <%= user.name %> 👋🙌</h3>
-                    <a class="text-sm text-blue-400 -mt-4" href="/profile/upload">Update profile picture</a>
+                <div class="bioContent flex flex-col ">
+                    <h3 class="text-3xl text-white mt-3">Hello, <%= user.username%>👋</h3>
+                    <h5 class="text-white">You can create a new post!</h5>
+                    <a href="/profile/upload" class="text-blue-500 ">Update Profile Picture</a>
                 </div>
             </div>
-            <a class="text-white bg-red-500 rounded-md px-3 py-2 leading-none" href="/logout">Logout</a>
-        </div>    
 
-        <h5 class="text-pink-300 text-xl mb-5 mt-5">Create a new post !</h5>
-        
-        <form action="/post" method="POST" class="flex flex-col ">
-            <textarea class=" text-white bg-zinc-800 rounded-md w-1/3 p-3 resize-none border-[1px] border-zinc-700 " name="content" placeholder="what's in your mind ?" ></textarea>
-            <input class=" w-32 bg-blue-500 text-white rounded-md mt-5 p-3 hover:bg-blue-600" type="submit" value="Post">
-        </form>
-
-        <div class="posts mt-20 ">
-            
-            <h3 class="text-zinc-400 text-2xl py-3 ">Your Posts</h3>
-
-            <div class="postContainer mt-5 flex flex-rows gap-3 flex-wrap">
-                <% user.posts.reverse().forEach(function(post){ %>
-                    
-                    <div class="post bg-zinc-800 border-[1px] border-zinc-700 rounded-md text-white w-72 p-4 my-2">
-                        <h3 class="text-blue-400 mb-3">@<%= user.username %> </h3>
-                        <p class="inline-block mb-4"> <%= post.content%></p>
-                        
-                        <div class="border-t border-gray-600 mt-4">
-                            <small class="inline-block mt-3 text-pink-400"> <%= post.likes.length%> likes</small>
-                            
-                            <div class="btns flex justify-between mt-1">
-                                <a class="text-blue-500 mt-4" href="/like/<%= post._id%>">
-                                    <%= post.likes.indexOf(user._id) === -1 ? "Like" : "Unlike" %>
-                                </a>
-                                <a class="text-zinc-400 mt-4" href="/edit/<%= post._id%>">Edit</a>
-                                <a class="text-red-500 mt-4" href="/delete/<%= post._id%>">Delete</a>
-                            </div>
-
-                        </div>
-
-                    </div> 
-                <% }) %> 
-
+            <div class="headRight bg-red-500 text-white px-3 py-2 rounded-md hover:bg-red-700"> 
+                <a href="/logout">Logout</a> 
             </div>
 
         </div>
+        
+        
+        <form action="/post" method="post" class="block mt-10 flex flex-col">
+            <input type="text" name="title" class="w-1/3 text-white bg-transparent mt-3 border-2 border-zinc-800 rounded-md p-3 outline-none" placeholder="Title (Optional)">
+            <textarea name="content" class="w-1/3 text-white resize-none bg-transparent mt-3 border-2 border-zinc-800 rounded-md p-3 outline-none" placeholder="Heyy!! What's in your mind ?"></textarea>
+            <input type="submit" class="px-3 py-2 bg-blue-500 rounded-md w-1/6 block text-white hover:bg-blue-600 mt-5" value="Post">
+        </form>
+        
 
+
+        <!--  POSTS  -->
+        <h3 class="text-zinc-500 text-2xl block mt-10 mb-5">Your Posts</h3>
+        <div class="posts  flex gap-4 flex-wrap">
+            <% user.posts.reverse().forEach(function(post) {   %>
+
+                <div class="post-container w-72 p-4 border-2 border-zinc-700 bg-zinc-800 rounded-md">
+                    <h4 class="text-blue-500">@ <%= user.username%></h4>
+                    <h3 class="text-white text-xl mb-4 mt-3"> <%= post.title%></h3>
+                    <p class="text-white mb-2 tracking-tight "><%= post.content%> </p>
+                    <h5 class="text-zinc-500 mb-2 text-sm"><%= post.date%></h5>
+                    <hr class="h-[1px] bg-zinc-600 w-[90%] my-4 mx-auto">
+                    <p class="text-pink-400  mt-3"  ><%= post.likes.length%> Likes</p>
+                    <div class="btns flex justify-between items-center">
+                        <!-- Likes -->
+                        <a class="text-blue-500 " href="/like/<%= post._id%>">
+                            <%- post.likes.indexOf(user._id) === -1 ? '<i class="fa-regular fa-thumbs-up"></i>' : '<i class="fa-solid fa-thumbs-up"></i>' %>
+                        </a>   
+                        
+                        <!-- Comments -->
+                        <a href="/comment/<%= post._id %>" class="text-blue-500 ">Comment</a>
+
+                        <!-- Edit -->
+                        <a href="/edit/<%= post._id%>" class="text-zinc-500 hover:text-zinc-600">Edit</a>
+                        <a href="/delete/<%= post._id%>" class="text-red-500 hover:text-red-600">Delete</a>
+                    </div>
+                </div>
+            <% }) %>
+
+        </div>
     </div>
 </body>
 </html>

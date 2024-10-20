@@ -1,0 +1,48 @@
+<!-- views/comment.ejs -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Post and Comments</title>
+    <link rel="stylesheet" href="/stylesheets/style.css">
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body>
+    <div class="min-h-screen w-full bg-zinc-900 p-10">
+        <a href="/profile" class="text-blue-400 block mb-5">Go back to Profile</a>
+        <div class="post-container w-72 p-4 border-2 border-zinc-700 bg-zinc-800 rounded-md">
+            <h4 class="text-blue-500">@ <%= post.author %></h4>
+            <h3 class="text-white text-xl mb-4 mt-3"> <%= post.title %></h3>
+            <p class="text-white mb-2 tracking-tight "><%= post.content %> </p>
+            <h5 class="text-zinc-500 mb-2 text-sm"><%= post.date %></h5>
+            <hr class="h-[1px] bg-zinc-600 w-[90%] my-4 mx-auto">
+            
+            <!-- Comments Section -->
+            <h4 class="text-white mt-4">Comments:</h4>
+            <ul>
+                <% post.comments.forEach(function(comment) { %>
+                    <li class="text-white">
+                        <strong>
+                            <% if (comment.user) { %>
+                                <span class="text-pink-400"> @<%= comment.user.username %> </span>
+                            <% } else { %>
+                                <span class="text-pink-400">@Unknown User </span>
+                            <% } %>
+                        </strong> <%= comment.content %>
+                        <br>
+                        <span class="text-zinc-400 text-sm"> <%= comment.date %> </span>
+                    </li>
+                <% }) %>
+            </ul>
+            
+
+            <!-- Add Comment Form -->
+            <form action="/comment/<%= post._id %>" method="post" class="mt-4">
+                <input type="text" name="comment" placeholder="Add a comment" class="w-full p-2 rounded-md bg-zinc-700 text-white outline-none">
+                <input type="submit" class="px-3 py-2 bg-blue-500 text-white rounded-md mt-2" value="Comment"></input>
+            </form>
+        </div>
+    </div>
+</body>
+</html>
