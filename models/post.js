@@ -7,12 +7,12 @@ const postSchema = mongoose.Schema({
     author: String,
     user : {
         type: mongoose.Schema.Types.ObjectId,
-        ref: 'user'
+        ref: 'User'
     },
     likes : [
         {
             type: mongoose.Schema.Types.ObjectId,
-        ref: 'user'
+        ref: 'User'
         }
     ],
     comments: [{
